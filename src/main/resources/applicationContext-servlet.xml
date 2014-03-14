@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+	<context:component-scan base-package="cn.v5.web" />
+	<bean id="exceptionResolver" class="cn.v5.ex.HttpServerExceptionResolver">
+	</bean>
+
+	<bean
+		class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
+		<property name="useSuffixPatternMatch" value="false" />
+	</bean>
+	<bean
+		class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<bean
+					class="org.springframework.http.converter.ByteArrayHttpMessageConverter" />
+				<bean
+					class="org.springframework.http.converter.StringHttpMessageConverter" />
+				<ref bean="jsonMessageConverter" />
+			</list>
+		</property>
+	</bean>
+	<bean
+		class="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver">
+		<property name="messageConverters" ref="jsonMessageConverter" />
+	</bean>
+	<bean id="jsonMessageConverter"
+		class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		<property name="objectMapper" ref="jacksonObjectMapper" />
+		<property name="supportedMediaTypes" value="application/json" />
+	</bean>
+
+	<bean id="jacksonObjectMapper"
+		class="cn.v5.framework.support.jackjson.CustomJacksonObjectMapper"></bean>
+
+	<mvc:default-servlet-handler />
+	<mvc:interceptors>
+		<bean class="cn.v5.web.interceptor.SecInterceptor">
+			<property name="excludes" value="/static/**,/api/user/login,/favicon.ico,/api/test" />
+		</bean>
+	</mvc:interceptors>
+
+	<bean id="validator"
+		class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+	</bean>
+	<bean
+		class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor">
+		<property name="validator" ref="validator" />
+		<property name="proxyTargetClass" value="true"></property>
+	</bean>
+	<bean id="exceptionAdvice" class="cn.v5.framework.validate.ValidateExceptionAdvice">
+	</bean>
+	
+	<aop:aspectj-autoproxy proxy-target-class="true" />
+    <aop:config proxy-target-class="true">
+   		<aop:pointcut expression="execution(* cn.v5.web.api.*.*(..))" id="servicePointCut"/>
+		<aop:aspect ref="exceptionAdvice">
+			<aop:after-throwing pointcut-ref="servicePointCut" method="afterThrowingValidationException" throwing="e"/>
+		</aop:aspect>
+	</aop:config>
+</beans>

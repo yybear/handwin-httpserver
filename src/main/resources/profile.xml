@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Project:  any
+  ~ Module:   any-parent
+  ~ File:     profile.xml
+  ~ Modifier: xyang
+  ~ Modified: 2012-09-24 08:16
+  ~
+  ~ Copyright (c) 2012 Sanyuan Ltd. All Rights Reserved.
+  ~
+  ~ Copying of this document or code and giving it to others and the
+  ~ use or communication of the contents thereof, are forbidden without
+  ~ expressed authority. Offenders are liable to the payment of damages.
+  ~ All rights reserved in the event of the grant of a invention patent or the
+  ~ registration of a utility model, design or code.
+  -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:cassandra="http://www.springframework.org/schema/data/cassandra"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+	   http://www.springframework.org/schema/data/cassandra http://www.springframework.org/schema/data/cassandra/spring-cassandra.xsd">
+
+    <beans profile="dev,test">
+    	<bean id="appConfig" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+            <property name="locations">
+                <list>
+                    <value>classpath:config.properties</value>
+                </list>
+            </property>
+        </bean>
+        <context:property-placeholder properties-ref="appConfig"/>
+
+        <bean id="dataSource" class="com.jolbox.bonecp.BoneCPDataSource" destroy-method="close">
+            <property name="driverClass" value="${db.driver}"/>
+            <property name="jdbcUrl" value="${db.url}"/>
+            <property name="username" value="${db.username}"/>
+            <property name="password" value="${db.password}"/>
+            <property name="idleConnectionTestPeriodInMinutes" value="60"/>
+            <property name="idleMaxAgeInMinutes" value="240"/>
+            <property name="maxConnectionsPerPartition" value="30"/>
+            <property name="minConnectionsPerPartition" value="10"/>
+            <property name="partitionCount" value="3"/>
+            <property name="acquireIncrement" value="5"/>
+            <property name="statementsCacheSize" value="100"/>
+            <property name="releaseHelperThreads" value="3"/>
+        </bean>
+        
+        <!-- <bean id="jedisConnFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory" p:use-pool="true">
+        	<property name="hostName" value="${redis.host}"/>
+        	<property name="port" value="${redis.port}"/>
+        	<property name="poolConfig">
+        		<bean class="redis.clients.jedis.JedisPoolConfig">
+        			<property name="minIdle" value="5"></property>
+        			<property name="testOnBorrow" value="true"></property>
+        			<property name="maxActive" value="10"></property>
+        			<property name="maxWait" value="1000"></property>
+        		</bean>
+        	</property>
+        </bean> -->
+        
+        <bean id="jedisPool" class="cn.v5.framework.support.jedis.JedisConnectionFactory">
+        	<property name="hostName" value="${redis.host}"/>
+        	<property name="port" value="${redis.port}"/>
+        	<property name="poolConfig">
+        		<bean class="redis.clients.jedis.JedisPoolConfig">
+        			<property name="minIdle" value="5"></property>
+        			<property name="testOnBorrow" value="true"></property>
+        			<property name="maxActive" value="10"></property>
+        			<property name="maxWait" value="1000"></property>
+        		</bean>
+        	</property>
+        </bean>
+        
+        <!-- <bean id="couchbaseConfig" class="cn.v5.couchbase.CouchbaseConfig">
+        	<property name="bootstrapHosts" value="${couchbase.host}"></property>
+        </bean> -->
+        
+        <bean id="mqConnFactory" class="cn.v5.mq.RabbitMqConnFactory">
+        	<property name="host" value="${mq.host}"></property>
+        	<property name="port" value="${mq.port}"></property>
+        </bean>
+    </beans>
+
+    <beans profile="production">
+    	<bean id="appConfig" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+            <property name="locations">
+                <list>
+                    <value>classpath:config.properties</value>
+                    <value>classpath:config-production.properties</value>
+                </list>
+            </property>
+        </bean>
+        <context:property-placeholder properties-ref="appConfig"/>
+        
+        <bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+            <property name="jndiName" value="${db.jndi}"/>
+        </bean>
+        
+        <bean id="jedisPool" class="cn.v5.framework.support.jedis.JedisConnectionFactory">
+        	<property name="hostName" value="${redis.host}"/>
+        	<property name="port" value="${redis.port}"/>
+        	<property name="poolConfig">
+        		<bean class="redis.clients.jedis.JedisPoolConfig">
+        			<property name="minIdle" value="5"></property>
+        			<property name="testOnBorrow" value="true"></property>
+        			<property name="maxActive" value="10"></property>
+        			<property name="maxWait" value="1000"></property>
+        		</bean>
+        	</property>
+        </bean>
+        
+        <!-- <bean id="couchbaseConfig" class="cn.v5.couchbase.CouchbaseConfig">
+        	<property name="bootstrapHosts" value=""></property>
+        </bean> -->
+        
+        <bean id="mqConnFactory" class="cn.v5.mq.RabbitMqConnFactory">
+        	<property name="host" value="${mq.host}"></property>
+        	<property name="port" value="${mq.port}"></property>
+        </bean>
+    </beans>
+</beans>
